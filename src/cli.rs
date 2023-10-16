@@ -18,7 +18,7 @@ pub(crate) struct Cli {
     #[clap(
         long,
         alias = "template_address",
-        default_value = "8d68f58415be65b40118d81fde91dc9c2ac4b06c47d588b35face9b016bc8d34"
+        default_value = "be232b36a4291fe9315ab4fb3f7bfca6e7342bec88f5e6ffa2e9a0e0fce4005a"
     )]
     pub template: String,
     #[clap(long, short = 'd')]
