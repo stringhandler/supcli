@@ -17,7 +17,7 @@ async fn main() {
     let jrpc = cli
         .daemon_jrpc_endpoint
         .clone()
-        .unwrap_or_else(|| "https://c759-102-69-194-130.ngrok-free.app".to_string());
+        .unwrap_or_else(|| "http://127.0.0.1:18016".to_string());
     let token = cli
         .auth_token
         .as_ref()

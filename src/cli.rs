@@ -18,7 +18,7 @@ pub(crate) struct Cli {
     #[clap(
         long,
         alias = "template_address",
-        default_value = "be232b36a4291fe9315ab4fb3f7bfca6e7342bec88f5e6ffa2e9a0e0fce4005a"
+        default_value = "d2db69a824d45a7a687ed989922d0cc0ba259a9e92711eae55eb6fef6a37ae2d"
     )]
     pub template: String,
     #[clap(long, short = 'd')]
@@ -68,10 +68,14 @@ pub(crate) mod create_pool {
     use crate::daemon_client::DaemonClient;
     use clap::Args;
     use serde_json::json;
+    use std::str::FromStr;
     use tari_engine_types::instruction::Instruction;
     use tari_engine_types::parse_arg;
     use tari_engine_types::TemplateAddress;
+    use tari_template_lib::args;
+    use tari_template_lib::prelude::Amount;
     use tari_template_lib::prelude::ComponentAddress;
+    use tari_template_lib::prelude::ResourceAddress;
     use tari_transaction::SubstateRequirement;
     use tari_utilities::hex::from_hex;
     use tari_utilities::hex::Hex;
@@ -124,10 +128,14 @@ pub(crate) mod make_prediction {
     use crate::daemon_client::DaemonClient;
     use clap::Args;
     use serde_json::json;
+    use std::str::FromStr;
     use tari_engine_types::instruction::Instruction;
     use tari_engine_types::parse_arg;
     use tari_engine_types::TemplateAddress;
+    use tari_template_lib::args;
+    use tari_template_lib::prelude::Amount;
     use tari_template_lib::prelude::ComponentAddress;
+    use tari_template_lib::prelude::ResourceAddress;
     use tari_transaction::SubstateRequirement;
     use tari_utilities::hex::from_hex;
     use tari_utilities::hex::Hex;
@@ -138,7 +146,9 @@ pub(crate) mod make_prediction {
 
         pub difference: String,
 
-        pub membership: String,
+        pub membership_amount: u64,
+        pub membership_resource: String,
+        pub membership_withdraw_from_component: String,
     }
 
     impl Command {
@@ -152,17 +162,35 @@ pub(crate) mod make_prediction {
             // let template_address= ;
             let method = "make_prediction".to_string();
 
+            let mut instructions = vec![];
+
+            instructions.push(Instruction::CallMethod {
+                component_address: ComponentAddress::from_hex(
+                    &self.membership_withdraw_from_component,
+                )
+                .unwrap(),
+                method: "withdraw".to_string(),
+                args: args![
+                    ResourceAddress::from_str(&self.membership_resource).unwrap(),
+                    self.membership_amount
+                ],
+            });
+            instructions.push(Instruction::PutLastInstructionOutputOnWorkspace {
+                key: b"bucket_membership".to_vec(),
+            });
+
+            instructions.push(Instruction::CallMethod {
+                component_address: ComponentAddress::from_hex(&self.component_address).unwrap(),
+                method,
+                args: args![
+                    parse_arg(&self.difference).unwrap(),
+                    Variable("bucket_membership"),
+                ],
+            });
+
             client
-                .submit_instruction(
-                    Instruction::CallMethod {
-                        component_address: ComponentAddress::from_hex(&self.component_address)
-                            .unwrap(),
-                        method,
-                        args: vec![
-                            parse_arg(&self.difference).unwrap(),
-                            parse_arg(&self.membership).unwrap(),
-                        ],
-                    },
+                .submit_instructions(
+                    instructions,
                     dump_buckets,
                     is_dry_run,
                     fees,
@@ -180,10 +208,14 @@ pub(crate) mod take_free_coins {
     use crate::daemon_client::DaemonClient;
     use clap::Args;
     use serde_json::json;
+    use std::str::FromStr;
     use tari_engine_types::instruction::Instruction;
     use tari_engine_types::parse_arg;
     use tari_engine_types::TemplateAddress;
+    use tari_template_lib::args;
+    use tari_template_lib::prelude::Amount;
     use tari_template_lib::prelude::ComponentAddress;
+    use tari_template_lib::prelude::ResourceAddress;
     use tari_transaction::SubstateRequirement;
     use tari_utilities::hex::from_hex;
     use tari_utilities::hex::Hex;
@@ -204,14 +236,17 @@ pub(crate) mod take_free_coins {
             // let template_address= ;
             let method = "take_free_coins".to_string();
 
+            let mut instructions = vec![];
+
+            instructions.push(Instruction::CallMethod {
+                component_address: ComponentAddress::from_hex(&self.component_address).unwrap(),
+                method,
+                args: args![],
+            });
+
             client
-                .submit_instruction(
-                    Instruction::CallMethod {
-                        component_address: ComponentAddress::from_hex(&self.component_address)
-                            .unwrap(),
-                        method,
-                        args: vec![],
-                    },
+                .submit_instructions(
+                    instructions,
                     dump_buckets,
                     is_dry_run,
                     fees,

@@ -65,7 +65,7 @@ impl DaemonClient {
 
     pub async fn submit_instructions(
         &mut self,
-        instruction: Vec<Instruction>,
+        instructions: Vec<Instruction>,
         dump_buckets: bool,
         is_dry_run: bool,
         fees: u64,
@@ -78,7 +78,7 @@ impl DaemonClient {
         //dbg!(r);
 
         let tx = CallInstructionRequest {
-            instructions: instruction,
+            instructions,
             fee_account: ComponentAddressOrName::Name("TestAccount_0".to_string()),
             dump_outputs_into: if dump_buckets {
                 Some(ComponentAddressOrName::Name("TestAccount_0".to_string()))
